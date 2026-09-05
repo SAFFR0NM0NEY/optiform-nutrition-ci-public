@@ -1,0 +1,32 @@
+{
+  "name": "optiform-nutrition-public-ci",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "typecheck": "tsc -b",
+    "test:run": "vitest run",
+    "test:firebase-emulators": "node scripts/assert-demo-emulator.mjs && firebase emulators:exec --only auth,firestore,storage --project demo-optiform-nutrition \"node scripts/test-firestore-rules.mjs && node scripts/test-coach-rules.mjs && node scripts/test-challenge-rules.mjs && node scripts/test-advanced-competition-rules.mjs && node scripts/emulator-social-pair-reconcile.mjs --project demo-optiform-nutrition --finalize && node scripts/emulator-social-pair-reconcile.mjs --project demo-optiform-nutrition --finalize && node scripts/emulator-social-pair-reconcile.mjs --project demo-optiform-nutrition --verify-only && node scripts/test-trust-rules.mjs && node scripts/test-social-rules.mjs && node scripts/test-platform-operations-rules.mjs && node scripts/test-global-competition-rules.mjs && node scripts/test-competition-meta-rules.mjs && node scripts/test-creator-rules.mjs && node scripts/test-storage-rules.mjs\"",
+    "format:check": "prettier . --check",
+    "integrity:verify": "node tools/verify-mirror-integrity.mjs",
+    "validate:public": "npm run lint && npm run typecheck && npm run test:run && npm run build && npm run format:check"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.2.0",
+    "eslint": "^10.8.1",
+    "firebase-admin": "^14.3.0",
+    "firebase-tools": "^15.28.1",
+    "globals": "^17.11.0",
+    "prettier": "^3.9.6",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.67.0",
+    "vite": "^8.2.2",
+    "vitest": "^4.1.11"
+  }
+}
