@@ -1,0 +1,3 @@
+# Public CI scope
+
+This candidate validates a narrow public-safe subset: generic radial gesture geometry/state, notification contracts, identity and gym lifecycle helpers, gym challenge and community contracts, provider-neutral commerce contracts/reducers, pure creator-delivery sanitization with synthetic fixtures, synthetic security cases, source-controlled Firebase rules against disposable emulators, and mirror integrity. The full application, Auth adapter, backend services and UI integration, proprietary catalogue/program/media content, private documentation, production administration/deployment, payment-provider integration, and Android remain private-only.
