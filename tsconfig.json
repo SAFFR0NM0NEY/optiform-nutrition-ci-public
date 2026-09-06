@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "useDefineForClassFields": true,
+    "module": "ESNext",
+    "lib": ["ES2023", "DOM"],
+    "types": ["node", "vite/client", "vitest/globals"],
+    "skipLibCheck": true,
+    "moduleResolution": "Bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "tsBuildInfoFile": "./node_modules/.cache/tsconfig.tsbuildinfo",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true
+  },
+  "include": [
+    "src",
+    "functions/src/commerce",
+    "functions/src/creator-delivery",
+    "functions/src/notifications",
+    "functions/src/gym-community",
+    "functions/src/gym-programs",
+    "vite.config.ts",
+    "eslint.config.js"
+  ]
+}
