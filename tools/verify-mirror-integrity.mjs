@@ -6,21 +6,31 @@ const root = process.cwd();
 const manifestPath = resolve(root, 'CI_EXPORT_MANIFEST.tsv');
 const manifestHashPath = resolve(root, 'CI_EXPORT_MANIFEST_SHA256.txt');
 const sourceShaPath = resolve(root, 'CI_SOURCE_SHA.txt');
-const fail = (message) => { throw new Error(`Mirror integrity failure: ${message}`); };
+const fail = (message) => {
+  throw new Error(`Mirror integrity failure: ${message}`);
+};
 const hash = (data) => createHash('sha256').update(data).digest('hex');
 
 if (!/^[0-9a-f]{40}\n?$/.test(readFileSync(sourceShaPath, 'utf8'))) fail('invalid CI source SHA');
 const manifest = readFileSync(manifestPath);
-if (readFileSync(manifestHashPath, 'utf8').trim() !== hash(manifest)) fail('manifest digest mismatch');
+if (readFileSync(manifestHashPath, 'utf8').trim() !== hash(manifest))
+  fail('manifest digest mismatch');
 
-const entries = manifest.toString('utf8').trimEnd().split('\n').slice(1).map((line) => {
-  const [path, size, sha256, origin] = line.split('\t');
-  if (!path || !size || !sha256 || !['direct', 'generated', 'fixture'].includes(origin)) fail(`invalid manifest row: ${line}`);
-  return { path, size: Number(size), sha256 };
-});
+const entries = manifest
+  .toString('utf8')
+  .trimEnd()
+  .split('\n')
+  .slice(1)
+  .map((line) => {
+    const [path, size, sha256, origin] = line.split('\t');
+    if (!path || !size || !sha256 || !['direct', 'generated', 'fixture'].includes(origin))
+      fail(`invalid manifest row: ${line}`);
+    return { path, size: Number(size), sha256 };
+  });
 for (const entry of entries) {
-  const data = readFileSync(resolve(root, entry.path));
-  if (data.length !== entry.size || hash(data) !== entry.sha256) fail(`manifest mismatch: ${entry.path}`);
+  const data = Buffer.from(readFileSync(resolve(root, entry.path), 'utf8').replace(/\r\n/g, '\n'));
+  if (data.length !== entry.size || hash(data) !== entry.sha256)
+    fail(`manifest mismatch: ${entry.path}`);
 }
 
 const ignored = new Set(['.git', 'node_modules', 'dist', '.firebase']);
@@ -32,10 +42,25 @@ function files(directory) {
   });
 }
 const paths = files(root).map((path) => relative(root, path).replaceAll('\\', '/'));
-const expected = new Set([...entries.map(({ path }) => path), 'CI_EXPORT_MANIFEST.tsv', 'CI_EXPORT_MANIFEST_SHA256.txt']);
+const expected = new Set([
+  ...entries.map(({ path }) => path),
+  'CI_EXPORT_MANIFEST.tsv',
+  'CI_EXPORT_MANIFEST_SHA256.txt',
+]);
 for (const path of paths) if (!expected.has(path)) fail(`unmanifested file: ${path}`);
 
-const forbiddenPaths = [/(^|\/)\.env/i, /(^|\/)android(\/|$)/i, /\.pem$/i, /\.key$/i, /\.jks$/i, /\.keystore$/i, /(^|\/)scripts\/admin(\/|$)/i, /(^|\/)docs(\/|$)/i, /(^|\/)AGENTS\.md$/i, /(^|\/)\.firebaserc$/i];
+const forbiddenPaths = [
+  /(^|\/)\.env/i,
+  /(^|\/)android(\/|$)/i,
+  /\.pem$/i,
+  /\.key$/i,
+  /\.jks$/i,
+  /\.keystore$/i,
+  /(^|\/)scripts\/admin(\/|$)/i,
+  /(^|\/)docs(\/|$)/i,
+  /(^|\/)AGENTS\.md$/i,
+  /(^|\/)\.firebaserc$/i,
+];
 const forbiddenText = [
   /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/,
   /(?:ghp_|github_pat_)[A-Za-z0-9_]+/,
@@ -59,5 +84,8 @@ for (const path of paths) {
   const text = readFileSync(absolute, 'utf8');
   if (forbiddenText.some((pattern) => pattern.test(text))) fail(`forbidden content: ${path}`);
 }
-if (paths.some((path) => path.startsWith('.github/workflows/android'))) fail('Android workflow present');
-console.log(`Mirror integrity verified: ${entries.length} exported files, zero forbidden findings.`);
+if (paths.some((path) => path.startsWith('.github/workflows/android')))
+  fail('Android workflow present');
+console.log(
+  `Mirror integrity verified: ${entries.length} exported files, zero forbidden findings.`,
+);
