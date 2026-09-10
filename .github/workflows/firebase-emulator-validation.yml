@@ -30,4 +30,3 @@ jobs:
       - run: npm run test:firebase-emulators
         env:
           GCLOUD_PROJECT: demo-optiform-nutrition
-
