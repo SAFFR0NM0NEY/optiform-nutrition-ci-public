@@ -1,0 +1,41 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    function hasRole(role) {
+      return request.auth != null
+        && request.auth.token.keys().hasAny(['optiformRoles'])
+        && request.auth.token.optiformRoles is list
+        && request.auth.token.optiformRoles.hasAny([role]);
+    }
+    match /athletes/{uid}/progress-photos/{fileName} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create: if request.auth != null && request.auth.uid == uid
+        && fileName.matches('^[A-Za-z0-9_-]+[.]jpg$')
+        && request.resource.contentType == 'image/jpeg'
+        && request.resource.size > 0
+        && request.resource.size <= 8 * 1024 * 1024;
+      allow update: if false;
+      allow delete: if request.auth != null && request.auth.uid == uid;
+    }
+    match /athletes/{uid}/competition-evidence/{fileName} {
+      function submissionId() { return fileName.split('[.]')[0]; }
+      function reachableReview() {
+        return firestore.exists(/databases/(default)/documents/competitionEvidenceReviews/$(submissionId()))
+          && firestore.get(/databases/(default)/documents/competitionEvidenceReviews/$(submissionId())).data.ownerUid == uid;
+      }
+      allow read: if request.auth != null && (request.auth.uid == uid
+        || ((hasRole('platform-admin') || hasRole('verifier')) && reachableReview()));
+      allow create: if request.auth != null && request.auth.uid == uid
+        && fileName.matches('^submission-[A-Za-z0-9-]+[.]mp4$')
+        && request.resource.contentType == 'video/mp4'
+        && request.resource.size > 0
+        && request.resource.size <= 100 * 1024 * 1024;
+      allow update: if false;
+      allow delete: if request.auth != null && request.auth.uid == uid
+        && (!firestore.exists(/databases/(default)/documents/competitionSubmissions/$(submissionId()))
+          || firestore.get(/databases/(default)/documents/competitionSubmissions/$(submissionId())).data.status in ['withdrawn', 'insufficient', 'rejected', 'invalidated']);
+    }
+    match /{allPaths=**} { allow read, write: if false; }
+  }
+}
