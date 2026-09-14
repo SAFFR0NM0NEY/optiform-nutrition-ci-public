@@ -1,0 +1,35 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "useDefineForClassFields": true,
+    "module": "ESNext",
+    "lib": ["ES2023", "DOM"],
+    "types": ["node", "vite/client", "vitest/globals"],
+    "skipLibCheck": true,
+    "moduleResolution": "Bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "tsBuildInfoFile": "./node_modules/.cache/tsconfig.tsbuildinfo",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true
+  },
+  "include": [
+    "src",
+    "functions/src/commerce",
+    "functions/src/creator-delivery",
+    "functions/src/creator-membership-challenges",
+    "functions/src/notifications",
+    "functions/src/gym-community",
+    "functions/src/gym-programs",
+    "functions/src/gym-analytics",
+    "functions/src/workout-import",
+    "functions-p26-auth/src",
+    "functions-p50-food-search/src",
+    "vite.config.ts",
+    "eslint.config.js"
+  ],
+  "exclude": ["functions-p26-auth/src/**/*.test.ts", "functions-p50-food-search/src/**/*.test.ts"]
+}
