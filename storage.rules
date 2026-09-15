@@ -1,0 +1,79 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    function hasRole(role) {
+      return request.auth != null
+        && request.auth.token.keys().hasAny(['optiformRoles'])
+        && request.auth.token.optiformRoles is list
+        && request.auth.token.optiformRoles.hasAny([role]);
+    }
+    match /athletes/{uid}/progress-photos/{fileName} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create: if request.auth != null && request.auth.uid == uid
+        && fileName.matches('^[A-Za-z0-9_-]+[.]jpg$')
+        && request.resource.contentType == 'image/jpeg'
+        && request.resource.size > 0
+        && request.resource.size <= 8 * 1024 * 1024;
+      allow update: if false;
+      allow delete: if request.auth != null && request.auth.uid == uid;
+    }
+    match /athletes/{uid}/competition-evidence/{fileName} {
+      function submissionId() { return fileName.split('[.]')[0]; }
+      function reachableReview() {
+        return firestore.exists(/databases/(default)/documents/competitionEvidenceReviews/$(submissionId()))
+          && firestore.get(/databases/(default)/documents/competitionEvidenceReviews/$(submissionId())).data.ownerUid == uid;
+      }
+      allow read: if request.auth != null && (request.auth.uid == uid
+        || ((hasRole('platform-admin') || hasRole('verifier')) && reachableReview()));
+      allow create: if request.auth != null && request.auth.uid == uid
+        && fileName.matches('^submission-[A-Za-z0-9-]+[.]mp4$')
+        && request.resource.contentType == 'video/mp4'
+        && request.resource.size > 0
+        && request.resource.size <= 100 * 1024 * 1024;
+      allow update: if false;
+      allow delete: if request.auth != null && request.auth.uid == uid
+        && (!firestore.exists(/databases/(default)/documents/competitionSubmissions/$(submissionId()))
+          || firestore.get(/databases/(default)/documents/competitionSubmissions/$(submissionId())).data.status in ['withdrawn', 'insufficient', 'rejected', 'invalidated']);
+    }
+    match /athletes/{athleteUid}/form-review-media/{reviewId}/{authorizationId}/{fileName} {
+      function authorization() {
+        return firestore.get(/databases/(default)/documents/coachFormUploadAuthorizations/$(request.auth.uid)/items/$(authorizationId));
+      }
+      function validAuthorization() {
+        return request.auth != null
+          && resource == null
+          && firestore.exists(/databases/(default)/documents/coachFormUploadAuthorizations/$(request.auth.uid)/items/$(authorizationId))
+          && authorization().data.schemaVersion == 1
+          && authorization().data.contractVersion == 'coach-form-media-v1'
+          && authorization().data.authorizationId == authorizationId
+          && authorization().data.actorUid == request.auth.uid
+          && authorization().data.athleteUid == athleteUid
+          && authorization().data.reviewId == reviewId
+          && authorization().data.fileName == fileName
+          && authorization().data.storagePath == 'athletes/' + athleteUid + '/form-review-media/' + reviewId + '/' + authorizationId + '/' + fileName
+          && authorization().data.status == 'active'
+          && request.time <= authorization().data.expiresAt
+          && request.resource.contentType == authorization().data.contentType
+          && request.resource.size == authorization().data.declaredSize
+          && request.resource.size > 0
+          && request.resource.size <= authorization().data.maxSize;
+      }
+      function validVideo() {
+        return authorization().data.artifactKind in ['initial-video', 'follow-up-video']
+          && fileName.matches('^(initial|follow-up-[1-8])[.]mp4$')
+          && request.resource.contentType == 'video/mp4'
+          && request.resource.size <= 100 * 1024 * 1024;
+      }
+      function validVoice() {
+        return authorization().data.artifactKind == 'voice-feedback'
+          && fileName.matches('^voice-feedback[.](webm|m4a|ogg)$')
+          && request.resource.contentType in ['audio/webm', 'audio/mp4', 'audio/ogg']
+          && request.resource.size <= 10 * 1024 * 1024;
+      }
+      allow create: if validAuthorization() && (validVideo() || validVoice());
+      allow read, update, delete: if false;
+    }
+    match /{allPaths=**} { allow read, write: if false; }
+  }
+}
