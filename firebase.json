@@ -1,0 +1,41 @@
+{
+  "functions": [
+    {
+      "source": "functions-p26-auth",
+      "codebase": "p26-auth",
+      "runtime": "nodejs22",
+      "predeploy": ["npm --prefix functions-p26-auth run build"]
+    },
+    {
+      "source": "functions-p50-food-search",
+      "codebase": "p50-food-search",
+      "runtime": "nodejs22",
+      "predeploy": ["npm --prefix functions-p50-food-search run build"]
+    }
+  ],
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "storage": {
+    "rules": "storage.rules"
+  },
+  "emulators": {
+    "firestore": {
+      "port": 8080
+    },
+    "auth": {
+      "port": 9099
+    },
+    "storage": {
+      "port": 9199
+    },
+    "functions": {
+      "port": 5001
+    },
+    "ui": {
+      "enabled": false
+    },
+    "singleProjectMode": true
+  }
+}
