@@ -30,4 +30,4 @@ jobs:
       - run: npm run test:firebase-emulators
         env:
           GCLOUD_PROJECT: demo-optiform-nutrition
-
+          OPEN_FOOD_FACTS_USER_AGENT: Optiform-Public-CI/1.0 (tests@example.invalid)
